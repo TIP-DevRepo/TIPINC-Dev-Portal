@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { submitRequest } from '../utils/api'
 
 const defaultTheme = {
   primaryColor: '#3b82f6',
@@ -44,6 +45,8 @@ export default function RequestForm({ theme = {}, context = {}, onSubmit }) {
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
   const [contextError, setContextError] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState(null)
 
   function validate() {
     const newErrors = {}
@@ -58,10 +61,9 @@ export default function RequestForm({ theme = {}, context = {}, onSubmit }) {
     setErrors(prev => ({ ...prev, [name]: undefined }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
 
-    // Check required context is present before allowing submission
     if (!appId || !clientId) {
       setContextError(true)
       return
@@ -73,18 +75,24 @@ export default function RequestForm({ theme = {}, context = {}, onSubmit }) {
       return
     }
 
-    // Build the full payload — form fields + auto-attached context
-    const payload = {
-      ...form,
-      app_id: appId,
-      client_id: clientId,
-      location_id: locationId || null,
-      user_id: userId || null,
-      submitted_at: new Date().toISOString()
-    }
+    setIsSubmitting(true)
 
-    if (onSubmit) onSubmit(payload)
-    setSubmitted(true)
+    try {
+      const payload = {
+        ...form,
+        app_id: appId,
+        client_id: clientId,
+        location_id: locationId || null,
+        user_id: userId || null
+      }
+
+      await submitRequest(payload)
+      setSubmitted(true)
+    } catch (err) {
+      setSubmitError(err.message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function handleReset() {
@@ -92,6 +100,7 @@ export default function RequestForm({ theme = {}, context = {}, onSubmit }) {
     setErrors({})
     setSubmitted(false)
     setContextError(false)
+    setSubmitError(null)
   }
 
   const styles = {
@@ -301,8 +310,14 @@ export default function RequestForm({ theme = {}, context = {}, onSubmit }) {
           />
         </div>
 
-        <button type="submit" style={styles.button}>
-          Submit Request
+        {submitError && (
+          <p style={{ ...styles.errorText, marginBottom: '12px', textAlign: 'center' }}>
+            {submitError}
+          </p>
+        )}
+
+        <button type="submit" style={{ ...styles.button, opacity: isSubmitting ? 0.7 : 1 }} disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit Request'}
         </button>
 
       </form>

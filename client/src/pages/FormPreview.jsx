@@ -22,10 +22,10 @@ const themes = {
 
 // Simulated context — in a real client app these come from the app itself
 const mockContext = {
-  appId: 'app-uuid-placeholder',
-  clientId: 'client-uuid-placeholder',
-  locationId: 'location-uuid-placeholder',
-  userId: 'user-uuid-placeholder',
+  appId: '9e3a1c59-c66c-47fb-8932-75f7724eaced',
+  clientId: 'b9ec008b-22df-4b98-b1d9-59bc1e84ce34',
+  locationId: 'null',
+  userId: 'null',
   appName: 'TIPConnect',
   clientName: 'Acme Corp'
 }
