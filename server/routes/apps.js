@@ -4,8 +4,8 @@ import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
-router.get('/', requireAuth, getAllApps)
-router.get('/:id', requireAuth, getAppById)
+router.get('/', getAllApps) // Auth added back when Entra is ready
+router.get('/:id', getAppById) // Auth added back when Entra is ready
 router.post('/', requireAuth, createApp)
 
 export default router

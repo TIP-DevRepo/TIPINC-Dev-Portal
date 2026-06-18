@@ -5,22 +5,9 @@ import { msalConfig } from './utils/authConfig'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import FormPreview from './pages/FormPreview'
+import KanbanBoard from './pages/KanbanBoard'
 
 const msalInstance = new PublicClientApplication(msalConfig)
-
-function Dashboard() {
-  return (
-    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-blue-400">TIPINC Dev Portal</h1>
-        <p className="mt-2 text-gray-400">Kanban board coming soon</p>
-        <span className="mt-4 inline-block bg-blue-900 text-blue-300 text-xs px-3 py-1 rounded-full">
-          v0.1.00 — Auth Ready
-        </span>
-      </div>
-    </div>
-  )
-}
 
 function NotFound() {
   return (
@@ -36,7 +23,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute><KanbanBoard /></ProtectedRoute>} />
             <Route path="/form-preview" element={<FormPreview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

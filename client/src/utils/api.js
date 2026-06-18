@@ -28,3 +28,9 @@ export async function getRequestsByClient(clientId) {
   if (!response.ok) throw new Error('Failed to fetch requests')
   return response.json()
 }
+
+export async function getApps() {
+  const response = await fetch(`${BASE_URL}/api/apps`)
+  if (!response.ok) throw new Error('Failed to fetch apps')
+  return response.json()
+}
