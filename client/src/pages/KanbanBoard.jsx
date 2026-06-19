@@ -6,6 +6,9 @@ import RequestCard from '../components/RequestCard'
 import RequestModal from '../components/RequestModal'
 import ContextMenu from '../components/ContextMenu'
 import Settings from './Settings'
+import DeploymentModal from '../components/DeploymentModal'
+import VersionHistory from './VersionHistory'
+import AuditLog from './AuditLog'
 
 const COLUMNS = ['Incoming', 'In Review', 'In Progress', 'Pending Approval', 'Deployed']
 const CATEGORIES = ['All', 'New Feature', 'Bug / Fix', 'UI Update', 'Stats / Reporting', 'Workflow Change']
@@ -24,6 +27,7 @@ export default function KanbanBoard() {
   const [search, setSearch] = useState('')
   const [filterPriority, setFilterPriority] = useState('All')
   const [filterCategory, setFilterCategory] = useState('All')
+  const [showDeployment, setShowDeployment] = useState(false)
 
   useEffect(() => {
     fetchApps()
@@ -137,11 +141,17 @@ export default function KanbanBoard() {
 
   const isFiltering = search || filterPriority !== 'All' || filterCategory !== 'All'
   const selectedAppName = apps.find(a => a.id === selectedApp)?.name || 'All Apps'
+  const selectedAppId = selectedApp !== 'all' ? selectedApp : apps[0]?.id
+  const pendingRequests = requests.filter(r => r.status === 'Pending Approval')
 
   return (
     <Layout activePage={activePage} onNavigate={setActivePage}>
       {activePage === 'settings' ? (
         <Settings />
+      ) : activePage === 'versions' ? (
+        <VersionHistory selectedApp={selectedApp !== 'all' ? selectedApp : null} />
+        ) : activePage === 'audit' ? (
+          <AuditLog />
       ) : (
         <>
           {/* Board Header */}
@@ -348,6 +358,39 @@ export default function KanbanBoard() {
             padding: '28px',
             overflowX: 'auto'
           }}>
+            {/* Deploy Button */}
+            {pendingRequests.length > 0 && (
+              <div style={{ marginBottom: '16px' }}>
+                <button
+                  onClick={() => setShowDeployment(true)}
+                  style={{
+                    backgroundColor: '#16a34a',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    padding: '8px 18px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  🚀 Create Deployment
+                  <span style={{
+                    backgroundColor: '#ffffff30',
+                    borderRadius: '99px',
+                    padding: '1px 7px',
+                    fontSize: '12px'
+                  }}>
+                    {pendingRequests.length} ready
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* Columns */}
             <div style={{
               display: 'flex',
               gap: '16px',
@@ -394,6 +437,18 @@ export default function KanbanBoard() {
                 onAssign={handleAssign}
                 onMove={handleMove}
                 onDelete={handleDelete}
+              />
+            )}
+
+            {showDeployment && (
+              <DeploymentModal
+                requests={pendingRequests}
+                appId={selectedAppId}
+                onClose={() => setShowDeployment(false)}
+                onDeployed={() => {
+                  fetchRequests()
+                  setShowDeployment(false)
+                }}
               />
             )}
           </div>

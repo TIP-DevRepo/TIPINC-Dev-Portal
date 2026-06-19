@@ -1,4 +1,5 @@
 import pool from '../utils/db.js'
+import { createNotification } from './notifications.js'
 
 export async function getAllRequests(req, res) {
   try {
@@ -80,6 +81,7 @@ export async function createRequest(req, res) {
 
     const newRequest = result.rows[0]
 
+    // Audit log
     await pool.query(
       `INSERT INTO audit_log (actor_id, actor_email, action, target_type, target_id, metadata, ip_address)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -93,6 +95,23 @@ export async function createRequest(req, res) {
         req.ip
       ]
     )
+
+    // Notify all devs assigned to this app
+    const devResult = await pool.query(
+      `SELECT dr.user_id FROM dev_roles dr
+       INNER JOIN app_assignments aa ON dr.user_id = aa.user_id
+       WHERE aa.app_id = $1`,
+      [app_id]
+    )
+    for (const dev of devResult.rows) {
+      await createNotification(
+        dev.user_id,
+        'NEW_REQUEST',
+        'New request submitted',
+        `${category}: ${title}`,
+        newRequest.id
+      )
+    }
 
     res.status(201).json(newRequest)
   } catch (err) {
@@ -123,6 +142,7 @@ export async function updateRequestStatus(req, res) {
 
     const updated = result.rows[0]
 
+    // Audit log
     await pool.query(
       `INSERT INTO audit_log (actor_id, action, target_type, target_id, metadata, ip_address)
        VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -135,6 +155,22 @@ export async function updateRequestStatus(req, res) {
         req.ip
       ]
     )
+
+    // Notify Senior Devs when card hits Pending Approval
+    if (status === 'Pending Approval') {
+      const seniorDevs = await pool.query(
+        `SELECT user_id FROM dev_roles WHERE role = 'SeniorDeveloper'`
+      )
+      for (const dev of seniorDevs.rows) {
+        await createNotification(
+          dev.user_id,
+          'PENDING_APPROVAL',
+          'Card ready for approval',
+          `A request is waiting for your review`,
+          id
+        )
+      }
+    }
 
     res.json(updated)
   } catch (err) {
@@ -161,6 +197,7 @@ export async function assignRequest(req, res) {
       return res.status(404).json({ error: 'Request not found' })
     }
 
+    // Audit log
     await pool.query(
       `INSERT INTO audit_log (actor_id, action, target_type, target_id, metadata)
        VALUES ($1, $2, $3, $4, $5)`,
@@ -171,6 +208,15 @@ export async function assignRequest(req, res) {
         id,
         JSON.stringify({ assigned_dev_id, assigned_dev_name })
       ]
+    )
+
+    // Notify the assigned dev
+    await createNotification(
+      assigned_dev_id,
+      'ASSIGNED',
+      'You have been assigned a request',
+      `A request has been assigned to you`,
+      id
     )
 
     res.json(result.rows[0])

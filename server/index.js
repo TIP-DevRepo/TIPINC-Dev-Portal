@@ -10,6 +10,9 @@ import requestsRouter from './routes/requests.js'
 import changelogsRouter from './routes/changelogs.js'
 import rolesRouter from './routes/roles.js'
 import appAssignmentsRouter from './routes/appAssignments.js'
+import deploymentsRouter from './routes/deployments.js'
+import auditLogRouter from './routes/auditLog.js'
+import notificationsRouter from './routes/notifications.js'
 
 dotenv.config()
 
@@ -47,6 +50,9 @@ app.use('/api/requests', requestsRouter)
 app.use('/api/changelogs', changelogsRouter)
 app.use('/api/roles', rolesRouter)
 app.use('/api/app-assignments', appAssignmentsRouter)
+app.use('/api/deployments', deploymentsRouter)
+app.use('/api/audit-log', auditLogRouter)
+app.use('/api/notifications', notificationsRouter)
 
 // 404 catch-all
 app.use((req, res) => {

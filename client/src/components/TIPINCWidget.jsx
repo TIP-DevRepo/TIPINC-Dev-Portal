@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import RequestForm from './RequestForm'
 import RequestTracker from './RequestTracker'
+import WhatsNew from './WhatsNew'
 
 export default function TIPINCWidget({ theme = {}, context = {}, defaultTab = 'form' }) {
   const [activeTab, setActiveTab] = useState(defaultTab)
@@ -18,7 +19,8 @@ export default function TIPINCWidget({ theme = {}, context = {}, defaultTab = 'f
 
   const tabs = [
     { id: 'form', label: 'Submit a Request' },
-    { id: 'tracker', label: 'My Requests' }
+    { id: 'tracker', label: 'My Requests' },
+    { id: 'whats-new', label: "What's New" }
   ]
 
   return (
@@ -31,7 +33,6 @@ export default function TIPINCWidget({ theme = {}, context = {}, defaultTab = 'f
       <div style={{
         display: 'flex',
         borderBottom: `2px solid ${t.borderColor}`,
-        marginBottom: '0',
         backgroundColor: t.backgroundColor,
         borderRadius: `${t.borderRadius} ${t.borderRadius} 0 0`,
         overflow: 'hidden'
@@ -42,8 +43,8 @@ export default function TIPINCWidget({ theme = {}, context = {}, defaultTab = 'f
             onClick={() => setActiveTab(tab.id)}
             style={{
               flex: 1,
-              padding: '14px 16px',
-              fontSize: '14px',
+              padding: '14px 10px',
+              fontSize: '13px',
               fontWeight: '600',
               border: 'none',
               borderBottom: `2px solid ${activeTab === tab.id ? t.primaryColor : 'transparent'}`,
@@ -71,6 +72,12 @@ export default function TIPINCWidget({ theme = {}, context = {}, defaultTab = 'f
         )}
         {activeTab === 'tracker' && (
           <RequestTracker
+            theme={{ ...theme, borderRadius: `0 0 ${t.borderRadius} ${t.borderRadius}` }}
+            context={context}
+          />
+        )}
+        {activeTab === 'whats-new' && (
+          <WhatsNew
             theme={{ ...theme, borderRadius: `0 0 ${t.borderRadius} ${t.borderRadius}` }}
             context={context}
           />
