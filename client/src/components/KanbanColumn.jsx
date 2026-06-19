@@ -66,7 +66,7 @@ function ToggleSwitch({ value, onChange, accent }) {
   )
 }
 
-export default function KanbanColumn({ title, cards = [], renderCard, onDrop }) {
+export default function KanbanColumn({ title, cards = [], totalCards, renderCard, onDrop }) {
   const colors = COLUMN_COLORS[title] || COLUMN_COLORS['Incoming']
   const isIncoming = title === 'Incoming'
 
@@ -148,7 +148,9 @@ export default function KanbanColumn({ title, cards = [], renderCard, onDrop }) 
           backgroundColor: colors.badge,
           color: colors.badgeText
         }}>
-          {cards.length}
+          {totalCards !== undefined && totalCards !== cards.length
+            ? `${cards.length}/${totalCards}`
+            : cards.length}
         </span>
       </div>
 
