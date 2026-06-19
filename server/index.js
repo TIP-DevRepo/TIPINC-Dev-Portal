@@ -11,6 +11,7 @@ import changelogsRouter from './routes/changelogs.js'
 import rolesRouter from './routes/roles.js'
 import appAssignmentsRouter from './routes/appAssignments.js'
 import deploymentsRouter from './routes/deployments.js'
+import auditLogRouter from './routes/auditLog.js'
 
 dotenv.config()
 
@@ -49,6 +50,8 @@ app.use('/api/changelogs', changelogsRouter)
 app.use('/api/roles', rolesRouter)
 app.use('/api/app-assignments', appAssignmentsRouter)
 app.use('/api/deployments', deploymentsRouter)
+app.use('/api/audit-log', auditLogRouter)
+
 // 404 catch-all
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' })

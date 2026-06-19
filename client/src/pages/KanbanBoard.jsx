@@ -8,6 +8,7 @@ import ContextMenu from '../components/ContextMenu'
 import Settings from './Settings'
 import DeploymentModal from '../components/DeploymentModal'
 import VersionHistory from './VersionHistory'
+import AuditLog from './AuditLog'
 
 const COLUMNS = ['Incoming', 'In Review', 'In Progress', 'Pending Approval', 'Deployed']
 const CATEGORIES = ['All', 'New Feature', 'Bug / Fix', 'UI Update', 'Stats / Reporting', 'Workflow Change']
@@ -149,6 +150,8 @@ export default function KanbanBoard() {
         <Settings />
       ) : activePage === 'versions' ? (
         <VersionHistory selectedApp={selectedApp !== 'all' ? selectedApp : null} />
+        ) : activePage === 'audit' ? (
+          <AuditLog />
       ) : (
         <>
           {/* Board Header */}
