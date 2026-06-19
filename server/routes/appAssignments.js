@@ -1,15 +1,16 @@
 import express from 'express'
 import {
   getAssignmentsByUser,
+  getAllAssignments,
   assignUserToApp,
   removeUserFromApp
 } from '../controllers/appAssignments.js'
-import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
+router.get('/all', getAllAssignments)
 router.get('/:userId', getAssignmentsByUser)
-router.post('/', requireAuth, assignUserToApp)
-router.delete('/', requireAuth, removeUserFromApp)
+router.post('/', assignUserToApp)
+router.delete('/', removeUserFromApp)
 
 export default router

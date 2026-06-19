@@ -78,3 +78,17 @@ export async function removeUserFromApp(req, res) {
     res.status(500).json({ error: 'Failed to remove user from app', detail: err.message })
   }
 }
+
+export async function getAllAssignments(req, res) {
+  try {
+    const result = await pool.query(
+      `SELECT aa.*, a.name as app_name
+       FROM app_assignments aa
+       JOIN apps a ON aa.app_id = a.id
+       ORDER BY a.name ASC`
+    )
+    res.json(result.rows)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch assignments', detail: err.message })
+  }
+}
