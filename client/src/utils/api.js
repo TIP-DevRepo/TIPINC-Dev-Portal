@@ -34,3 +34,37 @@ export async function getApps() {
   if (!response.ok) throw new Error('Failed to fetch apps')
   return response.json()
 }
+
+export async function assignRequest(requestId, devId, devName) {
+  const response = await fetch(`${BASE_URL}/api/requests/${requestId}/assign`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ assigned_dev_id: devId, assigned_dev_name: devName })
+  })
+  if (!response.ok) throw new Error('Failed to assign request')
+  return response.json()
+}
+
+export async function getDevelopers() {
+  const response = await fetch(`${BASE_URL}/api/roles`)
+  if (!response.ok) throw new Error('Failed to fetch developers')
+  return response.json()
+}
+
+export async function moveRequest(requestId, status) {
+  const response = await fetch(`${BASE_URL}/api/requests/${requestId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  })
+  if (!response.ok) throw new Error('Failed to move request')
+  return response.json()
+}
+
+export async function deleteRequest(requestId) {
+  const response = await fetch(`${BASE_URL}/api/requests/${requestId}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) throw new Error('Failed to delete request')
+  return response.json()
+}
