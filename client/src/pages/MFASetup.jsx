@@ -216,4 +216,4 @@ export default function MfaSetup({ token, onComplete }) {
       </div>
     </div>
   )
-}
+} 
