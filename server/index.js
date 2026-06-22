@@ -22,26 +22,25 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 4000
 
-// Security & middleware
-app.use(helmet())
+// CORS must come first before anything else
 app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:4173',
     process.env.CLIENT_URL
   ].filter(Boolean),
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
+
+// Handle preflight requests
+app.options('*', cors())
+
+// Security & middleware
+app.use(helmet())
 app.use(morgan('dev'))
 app.use(express.json())
-
-// Force HTTPS in production
-app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
-    return res.redirect('https://' + req.headers.host + req.url)
-  }
-  next()
-})
 
 // Health check
 app.get('/api/health', (req, res) => {
