@@ -8,7 +8,6 @@ const TYPE_CONFIG = {
   ASSIGNED:         { icon: '👤', color: '#6366f1' }
 }
 
-// Hardcoded for dev mode — will use real user ID when auth is active
 const CURRENT_USER_ID = 'dev-001'
 
 export default function NotificationBell() {
@@ -19,7 +18,6 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications()
-    // Poll every 30 seconds
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [])
@@ -53,6 +51,16 @@ export default function NotificationBell() {
     await fetch(`${API}/api/notifications/user/${CURRENT_USER_ID}/read-all`, { method: 'PATCH' })
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     setUnreadCount(0)
+  }
+
+  async function handleDelete(e, id) {
+    e.stopPropagation()
+    await fetch(`${API}/api/notifications/${id}`, { method: 'DELETE' })
+    setNotifications(prev => {
+      const notif = prev.find(n => n.id === id)
+      if (notif && !notif.read) setUnreadCount(c => Math.max(0, c - 1))
+      return prev.filter(n => n.id !== id)
+    })
   }
 
   function formatTime(dateStr) {
@@ -174,7 +182,8 @@ export default function NotificationBell() {
                       borderBottom: '1px solid #2d314830',
                       backgroundColor: notif.read ? 'transparent' : '#6366f108',
                       cursor: notif.read ? 'default' : 'pointer',
-                      transition: 'background-color 0.1s'
+                      transition: 'background-color 0.1s',
+                      alignItems: 'flex-start'
                     }}
                   >
                     {/* Icon */}
@@ -203,16 +212,32 @@ export default function NotificationBell() {
                         }}>
                           {notif.title}
                         </p>
-                        {!notif.read && (
-                          <div style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: '#6366f1',
-                            flexShrink: 0,
-                            marginTop: '4px'
-                          }} />
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          {!notif.read && (
+                            <div style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: '#6366f1'
+                            }} />
+                          )}
+                          <button
+                            onClick={(e) => handleDelete(e, notif.id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#3d4468',
+                              cursor: 'pointer',
+                              fontSize: '16px',
+                              padding: '0',
+                              lineHeight: 1,
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
                       </div>
                       {notif.message && (
                         <p style={{

@@ -5,17 +5,18 @@ import {
   createRequest,
   updateRequestStatus,
   assignRequest,
+  unassignRequest,
   deleteRequest
 } from '../controllers/requests.js'
-import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
 router.get('/', getAllRequests)
 router.get('/:id', getRequestById)
 router.post('/', createRequest)
-router.patch('/:id/status', updateRequestStatus) // Auth added back when Entra is ready
+router.patch('/:id/status', updateRequestStatus)
 router.patch('/:id/assign', assignRequest)
-router.delete('/:id', requireAuth, deleteRequest)
+router.patch('/:id/unassign', unassignRequest)
+router.delete('/:id', deleteRequest)
 
 export default router

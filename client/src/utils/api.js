@@ -92,3 +92,17 @@ export async function getChangelogs(appId) {
   if (!response.ok) throw new Error('Failed to fetch changelogs')
   return response.json()
 }
+
+export async function unassignRequest(requestId) {
+  const response = await fetch(`${BASE_URL}/api/requests/${requestId}/unassign`, {
+    method: 'PATCH'
+  })
+  if (!response.ok) throw new Error('Failed to unassign request')
+  return response.json()
+}
+
+export async function getNotesByRequest(requestId) {
+  const response = await fetch(`${BASE_URL}/api/notes/${requestId}`)
+  if (!response.ok) throw new Error('Failed to fetch notes')
+  return response.json()
+}

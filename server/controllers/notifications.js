@@ -58,3 +58,14 @@ export async function createNotification(userId, type, title, message, requestId
     console.error('Failed to create notification:', err.message)
   }
 }
+
+// Delete a notification
+export async function deleteNotification(req, res) {
+  try {
+    const { id } = req.params
+    await pool.query('DELETE FROM notifications WHERE id = $1', [id])
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete notification', detail: err.message })
+  }
+}

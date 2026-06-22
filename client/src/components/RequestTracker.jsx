@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getRequestsByClient } from '../utils/api'
+import { getRequestsByClient, getNotesByRequest } from '../utils/api'
 
 const defaultTheme = {
   primaryColor: '#3b82f6',
@@ -56,7 +56,21 @@ function ProgressDots({ step }) {
 
 function RequestCard({ request, theme: t }) {
   const [expanded, setExpanded] = useState(false)
+  const [notes, setNotes] = useState([])
   const config = STATUS_CONFIG[request.status] || STATUS_CONFIG['Incoming']
+
+  useEffect(() => {
+    if (expanded && notes.length === 0) fetchNotes()
+  }, [expanded])
+
+  async function fetchNotes() {
+    try {
+      const data = await getNotesByRequest(request.id)
+      setNotes(data.filter(n => !n.is_private))
+    } catch (err) {
+      console.error('Failed to fetch notes:', err)
+    }
+  }
 
   function formatDate(d) {
     return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -113,6 +127,37 @@ function RequestCard({ request, theme: t }) {
               <p style={{ fontSize: '12px', color: '#dc2626', margin: 0 }}>{request.rejection_note}</p>
             </div>
           )}
+
+          {/* Public Notes */}
+          {notes.length > 0 && (
+            <div style={{ marginBottom: '10px' }}>
+              <p style={{ fontSize: '11px', fontWeight: '700', color: t.mutedTextColor, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Notes from the team
+              </p>
+              {notes.map(note => (
+                <div key={note.id} style={{
+                  backgroundColor: t.backgroundColor,
+                  border: `1px solid ${t.borderColor}`,
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  marginBottom: '6px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: t.textColor }}>
+                      {note.author_name}
+                    </span>
+                    <span style={{ fontSize: '11px', color: t.mutedTextColor }}>
+                      {new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '13px', color: t.mutedTextColor, margin: 0, lineHeight: '1.5' }}>
+                    {note.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '12px', color: t.mutedTextColor }}>Priority: <strong>{request.priority}</strong></span>
             <span style={{ fontSize: '12px', color: t.mutedTextColor }}>{formatDate(request.submitted_at)}</span>

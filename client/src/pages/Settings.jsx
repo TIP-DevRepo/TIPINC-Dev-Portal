@@ -292,7 +292,6 @@ export default function Settings() {
                 value={newDev.user_id}
                 onChange={e => setNewDev(p => ({ ...p, user_id: e.target.value }))}
                 style={{ ...INPUT_STYLE, width: '100%', boxSizing: 'border-box' }}
-                required
               />
               <input
                 placeholder="Email"

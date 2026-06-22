@@ -13,10 +13,11 @@ export async function getAllRoles(req, res) {
 
 export async function assignRole(req, res) {
   try {
-    const { user_id, user_email, user_name, role } = req.body
+    const { user_email, user_name, role } = req.body
+    const user_id = req.body.user_id || `dev-${Date.now()}`
 
-    if (!user_id || !user_email || !role) {
-      return res.status(400).json({ error: 'user_id, user_email, and role are required' })
+    if (!user_email || !role) {
+      return res.status(400).json({ error: 'user_email and role are required' })
     }
 
     const validRoles = ['Developer', 'SeniorDeveloper']
@@ -24,7 +25,6 @@ export async function assignRole(req, res) {
       return res.status(400).json({ error: 'Invalid role' })
     }
 
-    // Upsert — update role if user already exists
     const result = await pool.query(
       `INSERT INTO dev_roles (user_id, user_email, user_name, role, assigned_by)
        VALUES ($1, $2, $3, $4, $5)
@@ -33,7 +33,6 @@ export async function assignRole(req, res) {
       [user_id, user_email, user_name, role, req.body.assigned_by || 'system']
     )
 
-    // Log to audit log
     await pool.query(
       `INSERT INTO audit_log (actor_id, action, target_type, target_id, metadata)
        VALUES ($1, $2, $3, $4, $5)`,
@@ -65,7 +64,6 @@ export async function removeRole(req, res) {
       return res.status(404).json({ error: 'Role not found' })
     }
 
-    // Log to audit log
     await pool.query(
       `INSERT INTO audit_log (actor_id, action, target_type, target_id, metadata)
        VALUES ($1, $2, $3, $4, $5)`,
@@ -81,5 +79,37 @@ export async function removeRole(req, res) {
     res.json({ message: 'Role removed successfully' })
   } catch (err) {
     res.status(500).json({ error: 'Failed to remove role', detail: err.message })
+  }
+}
+
+export async function setPriorityFlag(req, res) {
+  try {
+    const { userId } = req.params
+    const { priority_flag } = req.body
+
+    const result = await pool.query(
+      `UPDATE dev_roles SET priority_flag = $1 WHERE user_id = $2 RETURNING *`,
+      [priority_flag, userId]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Developer not found' })
+    }
+
+    await pool.query(
+      `INSERT INTO audit_log (actor_id, action, target_type, target_id, metadata)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        'system',
+        priority_flag ? 'PRIORITY_FLAG_ENABLED' : 'PRIORITY_FLAG_DISABLED',
+        'dev_role',
+        userId,
+        JSON.stringify({ userId, priority_flag })
+      ]
+    )
+
+    res.json(result.rows[0])
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update priority flag', detail: err.message })
   }
 }
