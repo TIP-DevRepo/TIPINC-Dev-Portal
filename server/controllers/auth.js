@@ -7,7 +7,7 @@ import crypto from 'crypto'
 import { sendInviteEmail } from '../utils/email.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'tipinc-dev-portal-secret'
-const SESSION_HOURS = 8
+const SESSION_HOURS = 24 * 365
 
 // Login with email + password
 export async function login(req, res) {

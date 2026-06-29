@@ -80,8 +80,8 @@ function UserManagement({ portalToken, apps }) {
   const [userAssignments, setUserAssignments] = useState([])
 
   useEffect(() => {
-    fetchUsers()
-  }, [])
+    if (portalToken) fetchUsers()
+  }, [portalToken])
 
   async function fetchUsers() {
     try {

@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { getApps } from '../utils/api'
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
@@ -8,9 +6,11 @@ const CATEGORIES = ['New Feature', 'Bug / Fix', 'UI Update', 'Stats / Reporting'
 const PRIORITIES = ['Low', 'Medium', 'High']
 const STATUSES = ['Incoming', 'In Review', 'In Progress', 'Pending Approval']
 
-export default function NewRequestModal({ apps, onClose, onCreated }) {
+export default function NewRequestModal({ apps: initialApps, onClose, onCreated }) {
+  const [apps, setApps] = useState(initialApps || [])
+  const [clients, setClients] = useState([])
   const [form, setForm] = useState({
-    app_id: apps[0]?.id || '',
+    app_id: initialApps[0]?.id || '',
     client_id: '',
     category: '',
     priority: 'Medium',
@@ -18,10 +18,17 @@ export default function NewRequestModal({ apps, onClose, onCreated }) {
     description: '',
     status: 'Incoming'
   })
-  const [clients, setClients] = useState([])
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+
+  // New app/client inline states
+  const [showNewApp, setShowNewApp] = useState(false)
+  const [showNewClient, setShowNewClient] = useState(false)
+  const [newAppName, setNewAppName] = useState('')
+  const [newClientName, setNewClientName] = useState('')
+  const [savingApp, setSavingApp] = useState(false)
+  const [savingClient, setSavingClient] = useState(false)
 
   useEffect(() => {
     fetchClients()
@@ -37,6 +44,52 @@ export default function NewRequestModal({ apps, onClose, onCreated }) {
     } catch (err) {
       console.error('Failed to fetch clients:', err)
       setClients([])
+    }
+  }
+
+  async function handleAddApp(e) {
+    e.preventDefault()
+    if (!newAppName.trim()) return
+    try {
+      setSavingApp(true)
+      const res = await fetch(`${API}/api/apps`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newAppName.trim() })
+      })
+      if (!res.ok) throw new Error('Failed to create app')
+      const newApp = await res.json()
+      setApps(prev => [...prev, newApp])
+      setForm(p => ({ ...p, app_id: newApp.id }))
+      setNewAppName('')
+      setShowNewApp(false)
+    } catch (err) {
+      console.error('Failed to add app:', err)
+    } finally {
+      setSavingApp(false)
+    }
+  }
+
+  async function handleAddClient(e) {
+    e.preventDefault()
+    if (!newClientName.trim()) return
+    try {
+      setSavingClient(true)
+      const res = await fetch(`${API}/api/clients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newClientName.trim() })
+      })
+      if (!res.ok) throw new Error('Failed to create client')
+      const newClient = await res.json()
+      setClients(prev => [...prev, newClient])
+      setForm(p => ({ ...p, client_id: newClient.id }))
+      setNewClientName('')
+      setShowNewClient(false)
+    } catch (err) {
+      console.error('Failed to add client:', err)
+    } finally {
+      setSavingClient(false)
     }
   }
 
@@ -66,7 +119,6 @@ export default function NewRequestModal({ apps, onClose, onCreated }) {
       }
       const newRequest = await res.json()
 
-      // If status isn't Incoming, update it
       if (form.status !== 'Incoming') {
         await fetch(`${API}/api/requests/${newRequest.id}/status`, {
           method: 'PATCH',
@@ -109,6 +161,18 @@ export default function NewRequestModal({ apps, onClose, onCreated }) {
 
   const fieldStyle = { marginBottom: '16px' }
 
+  const addNewStyle = {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: '#6366f1',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '2px 0',
+    marginTop: '4px',
+    fontFamily: 'Inter, system-ui, sans-serif'
+  }
+
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 200 }} />
@@ -139,25 +203,73 @@ export default function NewRequestModal({ apps, onClose, onCreated }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
           <div>
             <label style={labelStyle}>App <span style={{ color: '#ef4444' }}>*</span></label>
-            <select
-              value={form.app_id}
-              onChange={e => setForm(p => ({ ...p, app_id: e.target.value }))}
-              style={inputStyle}
-            >
-              {apps.map(app => <option key={app.id} value={app.id}>{app.name}</option>)}
-            </select>
+            {!showNewApp ? (
+              <>
+                <select
+                  value={form.app_id}
+                  onChange={e => setForm(p => ({ ...p, app_id: e.target.value }))}
+                  style={inputStyle}
+                >
+                  <option value="">Select app...</option>
+                  {apps.map(app => <option key={app.id} value={app.id}>{app.name}</option>)}
+                </select>
+                <button style={addNewStyle} onClick={() => setShowNewApp(true)}>+ Add new app</button>
+              </>
+            ) : (
+              <form onSubmit={handleAddApp}>
+                <input
+                  autoFocus
+                  placeholder="App name"
+                  value={newAppName}
+                  onChange={e => setNewAppName(e.target.value)}
+                  style={{ ...inputStyle, marginBottom: '4px' }}
+                />
+                <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                  <button type="submit" disabled={savingApp} style={{ fontSize: '11px', fontWeight: '600', padding: '4px 10px', backgroundColor: '#6366f1', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                    {savingApp ? 'Saving...' : 'Save'}
+                  </button>
+                  <button type="button" onClick={() => { setShowNewApp(false); setNewAppName('') }} style={{ fontSize: '11px', fontWeight: '600', padding: '4px 10px', backgroundColor: 'transparent', color: '#6b7280', border: '1px solid #2d3148', borderRadius: '6px', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
             {errors.app_id && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>{errors.app_id}</p>}
           </div>
+
           <div>
             <label style={labelStyle}>Client <span style={{ color: '#ef4444' }}>*</span></label>
-            <select
-              value={form.client_id}
-              onChange={e => setForm(p => ({ ...p, client_id: e.target.value }))}
-              style={inputStyle}
-            >
-              <option value="">Select client...</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            {!showNewClient ? (
+              <>
+                <select
+                  value={form.client_id}
+                  onChange={e => setForm(p => ({ ...p, client_id: e.target.value }))}
+                  style={inputStyle}
+                >
+                  <option value="">Select client...</option>
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <button style={addNewStyle} onClick={() => setShowNewClient(true)}>+ Add new client</button>
+              </>
+            ) : (
+              <form onSubmit={handleAddClient}>
+                <input
+                  autoFocus
+                  placeholder="Client name"
+                  value={newClientName}
+                  onChange={e => setNewClientName(e.target.value)}
+                  style={{ ...inputStyle, marginBottom: '4px' }}
+                />
+                <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                  <button type="submit" disabled={savingClient} style={{ fontSize: '11px', fontWeight: '600', padding: '4px 10px', backgroundColor: '#6366f1', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                    {savingClient ? 'Saving...' : 'Save'}
+                  </button>
+                  <button type="button" onClick={() => { setShowNewClient(false); setNewClientName('') }} style={{ fontSize: '11px', fontWeight: '600', padding: '4px 10px', backgroundColor: 'transparent', color: '#6b7280', border: '1px solid #2d3148', borderRadius: '6px', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
             {errors.client_id && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>{errors.client_id}</p>}
           </div>
         </div>
@@ -185,15 +297,11 @@ export default function NewRequestModal({ apps, onClose, onCreated }) {
                 key={p}
                 onClick={() => setForm(prev => ({ ...prev, priority: p }))}
                 style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: '8px',
+                  flex: 1, padding: '8px', borderRadius: '8px',
                   border: `1.5px solid ${form.priority === p ? '#6366f1' : '#2d3148'}`,
                   backgroundColor: form.priority === p ? '#6366f120' : 'transparent',
                   color: form.priority === p ? '#6366f1' : '#6b7280',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
+                  fontSize: '12px', fontWeight: '600', cursor: 'pointer',
                   fontFamily: 'Inter, system-ui, sans-serif'
                 }}
               >
@@ -247,15 +355,9 @@ export default function NewRequestModal({ apps, onClose, onCreated }) {
           <button
             onClick={onClose}
             style={{
-              flex: 1,
-              padding: '10px',
-              backgroundColor: 'transparent',
-              border: '1px solid #2d3148',
-              borderRadius: '8px',
-              color: '#6b7280',
-              fontSize: '13px',
-              fontWeight: '600',
-              cursor: 'pointer',
+              flex: 1, padding: '10px', backgroundColor: 'transparent',
+              border: '1px solid #2d3148', borderRadius: '8px', color: '#6b7280',
+              fontSize: '13px', fontWeight: '600', cursor: 'pointer',
               fontFamily: 'Inter, system-ui, sans-serif'
             }}
           >
@@ -265,14 +367,9 @@ export default function NewRequestModal({ apps, onClose, onCreated }) {
             onClick={handleSubmit}
             disabled={submitting}
             style={{
-              flex: 2,
-              padding: '10px',
-              backgroundColor: '#6366f1',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#ffffff',
-              fontSize: '13px',
-              fontWeight: '700',
+              flex: 2, padding: '10px', backgroundColor: '#6366f1',
+              border: 'none', borderRadius: '8px', color: '#ffffff',
+              fontSize: '13px', fontWeight: '700',
               cursor: submitting ? 'default' : 'pointer',
               opacity: submitting ? 0.7 : 1,
               fontFamily: 'Inter, system-ui, sans-serif'
